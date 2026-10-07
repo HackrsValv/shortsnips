@@ -1,0 +1,9 @@
+# Empty placeholders only. Never commit real keys.
+NOTION_TOKEN=
+NOTION_WEBHOOK_SECRET=
+BUTTONDOWN_API_KEY=
+SPIRAL_TOKEN=
+# Only for explicitly selected OpenAI fallback:
+LLM_API_KEY=
+ADMIN_TOKEN=
+NOTION_SETUP_TOKEN=

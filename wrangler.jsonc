@@ -1,0 +1,36 @@
+{
+  "name": "the-snip-report",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-07",
+  "workers_dev": true,
+  "observability": {"enabled": false},
+  "durable_objects": {"bindings": [{"name": "PIPELINE", "class_name": "Pipeline"}]},
+  "migrations": [{"tag": "v1", "new_sqlite_classes": ["Pipeline"]}],
+  "vars": {
+    "NOTION_VERSION": "2025-09-03",
+    "NOTION_DATA_SOURCE_ID": "REPLACE_WITH_DATA_SOURCE_ID",
+    "NOTION_WORKSPACE_ID": "REPLACE_WITH_WORKSPACE_ID",
+    "NOTION_SUBSCRIPTION_ID": "REPLACE_AFTER_WEBHOOK_SETUP",
+    "TAG_PROPERTY": "Tags",
+    "PUBLISH_TAG": "snip-report",
+    "PUBLISHED_PROPERTY": "Published",
+    "ISSUE_PROPERTY": "Buttondown Issue ID",
+    "PUBLISHED_AT_PROPERTY": "Published At",
+    "WRITING_PROVIDER": "spiral",
+    "SPIRAL_BASE_URL": "https://api.writewithspiral.com",
+    "SPIRAL_WORKSPACE_ID": "",
+    "SPIRAL_STYLE_ID": "",
+    "SPIRAL_SAVED_PROMPT": "",
+    "LLM_BASE_URL": "https://api.openai.com/v1",
+    "LLM_MODEL": "gpt-4.1-mini",
+    "ISSUE_LANGUAGE": "en",
+    "MAX_NOTES": "20",
+    "MAX_SOURCE_CHARS": "60000",
+    "DEBOUNCE_SECONDS": "90",
+    "ALLOW_REVIEWED_SEND": "false"
+  }
+  // Optional rare reconciliation: "triggers": {"crons": ["17 6 * * *"]}
+  // Secrets: NOTION_TOKEN, NOTION_WEBHOOK_SECRET, BUTTONDOWN_API_KEY,
+  // SPIRAL_TOKEN (default), optional LLM_API_KEY (OpenAI fallback), ADMIN_TOKEN, NOTION_SETUP_TOKEN (private subscription route).
+  // No Cloudflare API token belongs in the runtime Worker.
+}
