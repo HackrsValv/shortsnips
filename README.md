@@ -133,9 +133,9 @@ Public REST contract verified at https://api.writewithspiral.com/api/v1/prime an
 - GET `/api/v1/writing-styles/`, `/api/v1/workspaces/`, `/api/v1/saved-prompts/` can discover existing choices. POST `/api/v1/saved-prompts/` accepts command, content and optional workspace_id; PUT `/{id}` edits it. Official CLI implements sample upload through POST `/api/v1/setup/add-samples` and style creation through POST `/api/v1/writing-styles/basic`, but exact mutation payloads still require inspection before use.
 - A standalone knowledge-entry API is not documented in the public guide inspected. Do not invent a knowledge endpoint. Project context can live in the saved prompt, or verified workspace settings when real account UI is accessible.
 
-Nine mocked tests and dry-run bundling pass with Spiral support. Credentialed setup is blocked: vault exposes only browser secret fill, not a secret-bound HTTP/deployment rail; Cloudflare and Spiral saved browser sessions are signed out. Native Notion is not connected. No token extraction workaround is permitted. Resolve the supported access path or browser login before deployment.
+Nine mocked tests and dry-run bundling pass with Spiral support. Credentialed setup (Notion, Buttondown, Spiral, Cloudflare) has not been performed; complete it through supported access paths before deployment.
 
 
-## Latest scope, October 8, 2026 00:23 EEST
+## Scope decisions, October 8, 2026
 
-Owner selected https://thesnipreport.com/ rather than animaignota.com as the writing-reference source, English language, minimal text based strictly on tagged snips, and template review before any generation. This is not an explicit archive-domain relocation request. The apex currently resolves to a Buttondown-branded subscription page; no archive samples were exposed by the fetched homepage. Existing archive target short.thesnipreport.com must not be replaced from this source-reference answer. No sample uploads, generation or external mutations while the template/access decision is pending. See post-template-proposal.md.
+Owner selected https://thesnipreport.com/ as the writing-reference source, English language, minimal text based strictly on tagged snips, and template review before any generation. This is not an archive-domain relocation request; the existing archive target short.thesnipreport.com stays. No sample uploads, generation or external mutations while the template decision is pending. See post-template-proposal.md.

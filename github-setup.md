@@ -1,8 +1,8 @@
 # GitHub Actions setup
 
-Status: proposed files only. No repository created, workflow triggered or Worker deployed. GitHub native account nycterent is connected, but browser sign-in is pending and native actions cannot create a repo or commit files.
+Status: proposed files only. No repository created, workflow triggered or Worker deployed.
 
-Create a PRIVATE repository with the source at its root. Do not upload .dev.vars, node_modules, .wrangler, private sample/source data, secret files or internal conversation records. Configure the production environment and required reviewers where the account plan supports it. The workflow has only workflow_dispatch, no push/PR/schedule triggers. Default deploy=false only runs tests and a dry bundle. Explicit deploy=true requires owner go-ahead and reviewed config. GitHub Actions may use included minutes or incur costs; check plan and limits before running.
+Create a public repository with the source at its root. Do not upload .dev.vars, node_modules, .wrangler, private sample/source data, secret files or internal conversation records. Configure the production environment and required reviewers where the account plan supports it. The workflow has only workflow_dispatch, no push/PR/schedule triggers. Default deploy=false only runs tests and a dry bundle. Explicit deploy=true requires owner go-ahead and reviewed config. GitHub Actions may use included minutes or incur costs; check plan and limits before running.
 
 Secrets in repository Settings -> Secrets and variables -> Actions, or environment production:
 - CLOUDFLARE_API_TOKEN: the stored Cloudflare deployment token.
