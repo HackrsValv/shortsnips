@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { verifyAll, main } from '../scripts/verify-tokens.mjs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const env = {
   CLOUDFLARE_API_TOKEN: 'cf-token-secret',
@@ -135,3 +137,20 @@ test('main() logs service and status only — no token material (R8)', async () 
   assert.ok(all.includes('BUTTONDOWN_API_KEY') && all.includes('401'));
   for (const secret of Object.values(env)) assert.ok(!all.includes(secret), 'token material leaked: ' + secret);
 });
+
+
+// Adversarial-pass gap: a regression that stops the CLI entry guard from firing keeps the
+// whole mocked suite green while the workflow gate exits 0 having checked nothing. Spawn the
+// script as a real process with no env: every required check is 'missing', so main() must
+// log FAILED and exit 1. (POSIX-representative; the Windows argv[1] idiom swap is owner-gated.)
+test('CLI entry guard fires: spawned run with empty env exits 1 with FAILED line', () => {
+  const { status, stdout } = spawnSync(process.execPath, ['scripts/verify-tokens.mjs'], {
+    cwd: fileURLToPath(new URL('..', import.meta.url)),
+    env: {},
+    encoding: 'utf8',
+    timeout: 15000,
+  });
+  assert.equal(status, 1);
+  assert.ok(stdout.includes('[verify-tokens] FAILED'), 'expected FAILED line, got: ' + stdout.slice(0, 400));
+});
+
