@@ -9,7 +9,6 @@ const env = {
   NOTION_DATA_SOURCE_ID: 'ds-456',
   BUTTONDOWN_API_KEY: 'bd-key-secret',
   SPIRAL_TOKEN: 'spiral-key-secret',
-  NOTION_DATA_SOURCE_ID: 'ds-456',
 };
 
 // R7: every fetch is mocked; an unmocked URL fails loudly instead of hitting network.
@@ -116,6 +115,14 @@ test('non-JSON error body still yields a named verdict (KTD4)', async () => {
   const bd = r.results.find(x => x.service === 'BUTTONDOWN_API_KEY');
   assert.equal(bd.verdict, 'error');
   assert.ok(bd.detail.includes('502') && !bd.detail.includes('not json'));
+});
+
+test('thrown fetch reports error verdict under the canonical service key', async () => {
+  const throwing = async (url) => { if (String(url).includes('session-quota')) throw new TypeError('fetch failed'); return res(200, {}); };
+  const r = await verifyAll({ env: { ...env }, fetch: throwing });
+  const spiral = r.results.find(x => x.service === 'SPIRAL_TOKEN');
+  assert.ok(spiral, 'no result under canonical SPIRAL_TOKEN key');
+  assert.equal(spiral.verdict, 'error');
 });
 
 test('main() logs service and status only — no token material (R8)', async () => {

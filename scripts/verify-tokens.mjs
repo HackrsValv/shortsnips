@@ -102,7 +102,7 @@ export async function verifyAll({ env, fetch }) {
   try { push(await checkCloudflare(env, fetch)); } catch { push(verdict('CLOUDFLARE_API_TOKEN', 'error', 'Cloudflare: network error')); }
   try { push(await checkNotion(env, fetch)); } catch { push(verdict('NOTION_TOKEN', 'error', 'Notion: network error')); }
   try { push(await checkButtondown(env, fetch)); } catch { push(verdict('BUTTONDOWN_API_KEY', 'error', 'Buttondown: network error')); }
-  try { push(await checkSpiral(env, fetch)); } catch { push(verdict('SPIRAL_API_KEY', 'error', 'Spiral: network error')); }
+  try { push(await checkSpiral(env, fetch)); } catch { push(verdict('SPIRAL_TOKEN', 'error', 'Spiral: network error')); }
   try { push(await checkLlm(env, fetch)); } catch { push(verdict('LLM_API_KEY', 'error', 'LLM: network error')); }
   push(checkWebhookSecret(env));
   return { results, ok: results.every(r => r.verdict === 'ok' || r.verdict === 'skipped') };
