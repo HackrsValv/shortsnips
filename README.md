@@ -71,6 +71,8 @@ npm run check
 npx wrangler deploy --dry-run --outdir /tmp/snip-report-build
 # Actual deploy only after permissions, spending limits, schema and secrets are confirmed:
 # npx wrangler deploy
+
+Before `wrangler deploy` runs, the workflow verifies every service token live against its issuer — one free, read-only call each (Cloudflare, Notion, Buttondown, Spiral), plus `LLM_API_KEY` when set. Optional secrets that do not exist yet (`LLM_API_KEY`, `NOTION_WEBHOOK_SECRET`) are skipped, never blocking. A failing check aborts the deploy naming the service and the HTTP status; tokens and response bodies are never logged. The validate job stays fully offline.
 ```
 
 Set `WRANGLER_SEND_METRICS=false` when running Wrangler if anonymous CLI telemetry is unwanted.
@@ -133,7 +135,7 @@ Public REST contract verified at https://api.writewithspiral.com/api/v1/prime an
 - GET `/api/v1/writing-styles/`, `/api/v1/workspaces/`, `/api/v1/saved-prompts/` can discover existing choices. POST `/api/v1/saved-prompts/` accepts command, content and optional workspace_id; PUT `/{id}` edits it. Official CLI implements sample upload through POST `/api/v1/setup/add-samples` and style creation through POST `/api/v1/writing-styles/basic`, but exact mutation payloads still require inspection before use.
 - A standalone knowledge-entry API is not documented in the public guide inspected. Do not invent a knowledge endpoint. Project context can live in the saved prompt, or verified workspace settings when real account UI is accessible.
 
-Nine mocked tests and dry-run bundling pass with Spiral support. Credentialed setup (Notion, Buttondown, Spiral, Cloudflare) has not been performed; complete it through supported access paths before deployment.
+Twenty mocked tests and dry-run bundling pass with Spiral support. Credentialed setup (Notion, Buttondown, Spiral, Cloudflare) has not been performed; complete it through supported access paths before deployment.
 
 
 ## Scope decisions, October 8, 2026
