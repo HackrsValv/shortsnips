@@ -1,6 +1,7 @@
 // Live, read-only verification of deploy credentials (plan 2026-10-08, KTD1/KTD2/KTD4).
 // One free call per service; verdicts ok | invalid | error | missing | skipped; fails closed.
 // Tokens come from env only and are never printed: log lines carry service + verdict + reason.
+import { pathToFileURL } from 'node:url';
 
 const SERVICES = {
   CLOUDFLARE_API_TOKEN: 'Cloudflare',
@@ -10,6 +11,12 @@ const SERVICES = {
   LLM_API_KEY: 'LLM',
   NOTION_WEBHOOK_SECRET: 'Notion webhook',
 };
+
+// I1: a blackholed issuer connection must not stall the gate until the job timeout.
+const FETCH_TIMEOUT_MS = 10_000;
+function withTimeout(fetch) {
+  return (url, opts = {}) => fetch(url, { ...opts, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+}
 
 async function readJson(res) {
   const text = await res.text();
@@ -96,14 +103,16 @@ function checkWebhookSecret(env) {
     : verdict(service, 'skipped', 'Notion webhook: not set, skipped');
 }
 
-export async function verifyAll({ env, fetch }) {
+export async function verifyAll({ env, fetch: rawFetch }) {
+  const fetch = withTimeout(rawFetch);
   const results = [];
   const push = r => results.push(r);
-  try { push(await checkCloudflare(env, fetch)); } catch { push(verdict('CLOUDFLARE_API_TOKEN', 'error', 'Cloudflare: network error')); }
-  try { push(await checkNotion(env, fetch)); } catch { push(verdict('NOTION_TOKEN', 'error', 'Notion: network error')); }
-  try { push(await checkButtondown(env, fetch)); } catch { push(verdict('BUTTONDOWN_API_KEY', 'error', 'Buttondown: network error')); }
-  try { push(await checkSpiral(env, fetch)); } catch { push(verdict('SPIRAL_TOKEN', 'error', 'Spiral: network error')); }
-  try { push(await checkLlm(env, fetch)); } catch { push(verdict('LLM_API_KEY', 'error', 'LLM: network error')); }
+  const errDetail = (e) => (e?.name === 'TimeoutError' || e?.name === 'AbortError' ? 'timed out after 10s' : 'network error');
+  try { push(await checkCloudflare(env, fetch)); } catch (e) { push(verdict('CLOUDFLARE_API_TOKEN', 'error', 'Cloudflare: ' + errDetail(e))); }
+  try { push(await checkNotion(env, fetch)); } catch (e) { push(verdict('NOTION_TOKEN', 'error', 'Notion: ' + errDetail(e))); }
+  try { push(await checkButtondown(env, fetch)); } catch (e) { push(verdict('BUTTONDOWN_API_KEY', 'error', 'Buttondown: ' + errDetail(e))); }
+  try { push(await checkSpiral(env, fetch)); } catch (e) { push(verdict('SPIRAL_TOKEN', 'error', 'Spiral: ' + errDetail(e))); }
+  try { push(await checkLlm(env, fetch)); } catch (e) { push(verdict('LLM_API_KEY', 'error', 'LLM: ' + errDetail(e))); }
   push(checkWebhookSecret(env));
   return { results, ok: results.every(r => r.verdict === 'ok' || r.verdict === 'skipped') };
 }
@@ -115,6 +124,6 @@ export async function main({ env = process.env, fetch = globalThis.fetch, log = 
   return ok ? 0 : 1;
 }
 
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop())) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   process.exit(await main());
 }

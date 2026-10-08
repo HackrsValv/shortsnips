@@ -127,6 +127,14 @@ test('thrown fetch reports error verdict under the canonical service key', async
   assert.equal(spiral.verdict, 'error');
 });
 
+test('hung issuer times out: aborting fetch yields error verdict naming the timeout (I1)', async () => {
+  const hung = async () => { const e = new Error('The operation was aborted due to timeout'); e.name = 'TimeoutError'; throw e; };
+  const r = await verifyAll({ env: { ...env }, fetch: hung });
+  const spiral = r.results.find(x => x.service === 'SPIRAL_TOKEN');
+  assert.equal(spiral.verdict, 'error');
+  assert.ok(spiral.detail.includes('timed out'), 'expected timeout detail, got: ' + spiral.detail);
+});
+
 test('main() logs service and status only — no token material (R8)', async () => {
   const routes = [...happy.filter(([n]) => n !== 'subscribers'), ['subscribers', () => res(401, { detail: 'nope' })]];
   const { fetch } = mockFetch(routes);

@@ -69,7 +69,8 @@ jobs:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           NOTION_WEBHOOK_SECRET: ${{ secrets.NOTION_WEBHOOK_SECRET }}
         run: |
-          export NOTION_DATA_SOURCE_ID=$(node --input-type=module -e "import fs from 'node:fs'; const c = JSON.parse(fs.readFileSync('wrangler.jsonc','utf8').replace(/^\\s*\\/\\/.*$/gm,'')); process.stdout.write(c.vars.NOTION_DATA_SOURCE_ID)")
+          NOTION_DATA_SOURCE_ID=$(node --input-type=module -e "import fs from 'node:fs'; const c = JSON.parse(fs.readFileSync('wrangler.jsonc','utf8').replace(/^\\s*\\/\\/.*$/gm,'')); process.stdout.write(c.vars.NOTION_DATA_SOURCE_ID)")
+          export NOTION_DATA_SOURCE_ID
           node scripts/verify-tokens.mjs
       - name: Deploy code (bootstrap accepts no unsigned content events)
         run: npx wrangler deploy
