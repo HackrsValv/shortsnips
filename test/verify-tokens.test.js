@@ -8,14 +8,15 @@ const env = {
   NOTION_TOKEN: 'notion-token-secret',
   NOTION_DATA_SOURCE_ID: 'ds-456',
   BUTTONDOWN_API_KEY: 'bd-key-secret',
-  SPIRAL_API_KEY: 'spiral-key-secret',
+  SPIRAL_TOKEN: 'spiral-key-secret',
+  NOTION_DATA_SOURCE_ID: 'ds-456',
 };
 
 // R7: every fetch is mocked; an unmocked URL fails loudly instead of hitting network.
 function mockFetch(routes) {
   const calls = [];
   const fetch = async (url, opts = {}) => {
-    calls.push({ url: String(url), method: opts.method ?? 'GET', headers: opts.headers ?? {} });
+    calls.push({ url: String(url), method: opts.method ?? 'GET', headers: opts.headers ?? {}, body: opts.body ?? null });
     for (const [needle, respond] of routes) if (String(url).includes(needle)) return respond();
     throw new Error('unexpected fetch: ' + url);
   };
@@ -27,6 +28,7 @@ const happy = [
   ['tokens/verify', () => res(200, { result: { status: 'active' } })],
   ['client/v4/accounts', () => res(200, { result: [{ id: 'acct-123' }] })],
   ['users/me', () => res(200, { object: 'user' })],
+  ['data_sources', () => res(200, { results: [] })],
   ['subscribers', () => res(200, { results: [{}] })],
   ['session-quota', () => res(200, { remaining: 7, plan_tier: 'pro' })],
 ];
@@ -40,11 +42,16 @@ test('all required services verify ok with correct endpoints and auth shapes', a
   assert.equal(call('client/v4/accounts').headers.Authorization, 'Bearer cf-token-secret');
   assert.equal(call('users/me').headers.Authorization, 'Bearer notion-token-secret');
   assert.equal(call('users/me').headers['Notion-Version'], '2025-09-03');
+  const ds = call('data_sources');
+  assert.equal(ds.method, 'POST');
+  assert.ok(ds.url.includes('/data_sources/ds-456/query'));
+  assert.equal(ds.headers.Authorization, 'Bearer notion-token-secret');
+  assert.deepEqual(JSON.parse(ds.body), { page_size: 1 });
   assert.equal(call('subscribers').headers.Authorization, 'Token bd-key-secret');
   const spiral = call('session-quota');
   assert.ok(spiral.url.startsWith('https://api.writewithspiral.com/api/v1/billing/'));
-  assert.equal(spiral.headers.Authorization, 'Bearer spiral-key-secret');
-  assert.equal(calls.length, 5); // one call per check; unset optionals add none
+  assert.equal(spiral.headers.Authorization, 'Bearer spiral-key-secret'); // repo secret name: SPIRAL_TOKEN
+  assert.equal(calls.length, 6); // cf verify+accounts, notion users/me+query, buttondown, spiral; unset optionals add none
 });
 
 test('revoked Buttondown key yields invalid naming service and 401 (AE1, R3)', async () => {
@@ -98,7 +105,7 @@ test('Spiral 200 is ok regardless of quota fields (R4)', async () => {
   const routes = [...happy.filter(([n]) => n !== 'session-quota'), ['session-quota', () => res(200, { remaining: null, plan_tier: 'free' })]];
   const { fetch } = mockFetch(routes);
   const r = await verifyAll({ env: { ...env }, fetch });
-  assert.equal(r.results.find(x => x.service === 'SPIRAL_API_KEY').verdict, 'ok');
+  assert.equal(r.results.find(x => x.service === 'SPIRAL_TOKEN').verdict, 'ok');
   assert.equal(r.ok, true);
 });
 

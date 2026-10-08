@@ -6,7 +6,7 @@ const SERVICES = {
   CLOUDFLARE_API_TOKEN: 'Cloudflare',
   NOTION_TOKEN: 'Notion',
   BUTTONDOWN_API_KEY: 'Buttondown',
-  SPIRAL_API_KEY: 'Spiral',
+  SPIRAL_TOKEN: 'Spiral',
   LLM_API_KEY: 'LLM',
   NOTION_WEBHOOK_SECRET: 'Notion webhook',
 };
@@ -45,11 +45,16 @@ async function checkCloudflare(env, fetch) {
 async function checkNotion(env, fetch) {
   const service = 'NOTION_TOKEN';
   if (!env[service]) return verdict(service, 'missing', 'Notion: not set');
-  const res = await fetch('https://api.notion.com/v1/users/me', {
-    headers: { Authorization: `Bearer ${env.NOTION_TOKEN}`, 'Notion-Version': env.NOTION_VERSION ?? '2025-09-03' },
+  const headers = { Authorization: `Bearer ${env.NOTION_TOKEN}`, 'Notion-Version': env.NOTION_VERSION || '2025-09-03' };
+  let res = await fetch('https://api.notion.com/v1/users/me', { headers });
+  if (!res.ok) return httpFail(service, res.status);
+  // R2 second half: the Worker's own query call shape (worker.js:143) proves the data source is retrievable.
+  if (!env.NOTION_DATA_SOURCE_ID) return verdict(service, 'missing', 'Notion: NOTION_DATA_SOURCE_ID not set');
+  res = await fetch(`https://api.notion.com/v1/data_sources/${env.NOTION_DATA_SOURCE_ID}/query`, {
+    method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ page_size: 1 }),
   });
   if (!res.ok) return httpFail(service, res.status);
-  return verdict(service, 'ok', 'Notion: users/me 200');
+  return verdict(service, 'ok', 'Notion: users/me 200, data source retrievable');
 }
 
 async function checkButtondown(env, fetch) {
@@ -63,11 +68,11 @@ async function checkButtondown(env, fetch) {
 }
 
 async function checkSpiral(env, fetch) {
-  const service = 'SPIRAL_API_KEY';
+  const service = 'SPIRAL_TOKEN';
   if (!env[service]) return verdict(service, 'missing', 'Spiral: not set');
-  const base = env.SPIRAL_BASE_URL ?? 'https://api.writewithspiral.com';
+  const base = env.SPIRAL_BASE_URL || 'https://api.writewithspiral.com';
   const res = await fetch(`${base}/api/v1/billing/session-quota`, {
-    headers: { Authorization: `Bearer ${env.SPIRAL_API_KEY}` },
+    headers: { Authorization: `Bearer ${env.SPIRAL_TOKEN}` },
   });
   if (!res.ok) return httpFail(service, res.status);
   // R4: 200 proves the token; quota/plan fields stay the Worker's runtime concern.
@@ -77,7 +82,7 @@ async function checkSpiral(env, fetch) {
 async function checkLlm(env, fetch) {
   const service = 'LLM_API_KEY';
   if (!env.LLM_API_KEY) return verdict(service, 'skipped', 'LLM: not set, skipped');
-  const base = env.LLM_BASE_URL ?? 'https://api.openai.com/v1';
+  const base = env.LLM_BASE_URL || 'https://api.openai.com/v1';
   const res = await fetch(`${base}/models`, { headers: { Authorization: `Bearer ${env.LLM_API_KEY}` } });
   if (!res.ok) return httpFail(service, res.status);
   return verdict(service, 'ok', 'LLM: models 200');
