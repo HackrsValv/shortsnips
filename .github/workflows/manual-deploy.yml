@@ -61,6 +61,16 @@ jobs:
           if (config.includes('REPLACE_WITH_DATA_SOURCE_ID') || config.includes('REPLACE_WITH_WORKSPACE_ID')) throw new Error('Verify actual Notion data source/workspace before deploy');
           if (!config.includes('"ALLOW_REVIEWED_SEND": "false"')) throw new Error('This workflow is draft-only');
           JS
+      - name: Verify service tokens
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+          SPIRAL_TOKEN: ${{ secrets.SPIRAL_TOKEN }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          NOTION_WEBHOOK_SECRET: ${{ secrets.NOTION_WEBHOOK_SECRET }}
+        run: |
+          export NOTION_DATA_SOURCE_ID=$(node --input-type=module -e "import fs from 'node:fs'; const c = JSON.parse(fs.readFileSync('wrangler.jsonc','utf8').replace(/^\\s*\\/\\/.*$/gm,'')); process.stdout.write(c.vars.NOTION_DATA_SOURCE_ID)")
+          node scripts/verify-tokens.mjs
       - name: Deploy code (bootstrap accepts no unsigned content events)
         run: npx wrangler deploy
       - name: Install runtime secrets through stdin, never logs or committed files
